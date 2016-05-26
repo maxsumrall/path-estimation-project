@@ -2,7 +2,7 @@ import subprocess
 import os
 
 # choose which example to use
-test_project_location = ["python_example", "java_example"][1]
+test_project_location = ["python_example", "java_example", "c_example"][2]
 
 
 # A script to execute the setup and run scripts supplied by the students.
@@ -13,8 +13,6 @@ def main():
     budget = "1000000"
 
     abs_path = os.path.abspath(file)
-
-    project_directory = "python_example/"
 
     # Students programs are first setup with this script.
     # For Python or other interrupted programs, nothing needs to be done inside the script.
