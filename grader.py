@@ -2,7 +2,7 @@ import subprocess
 import os
 
 # choose which example to use
-test_project_location = ["python_example", "java_example"][0]
+test_project_location = ["python_example", "java_example"][1]
 
 
 # A script to execute the setup and run scripts supplied by the students.
@@ -19,7 +19,7 @@ def main():
     # Students programs are first setup with this script.
     # For Python or other interrupted programs, nothing needs to be done inside the script.
     # For compiled programs, this is where you invoke the compiler.
-    subprocess.Popen("cd " + test_project_location + " && ./setup.sh && cd ..", shell=True)
+    subprocess.call("cd " + test_project_location + " && ./setup.sh && cd ..", shell=True)
 
     # Students programs are invoked with this script.
     # This script may be called many times. That is why you should do setup

@@ -2,3 +2,10 @@
 .pyo
 .iml
 .xml
+__pycache__/
+java_example/pathEstimate/pathEstimate.iml
+java_example/pathEstimate/src/main/resources/
+java_example/pathEstimate/src/test/
+java_example/pathEstimate/target/
+python_example/__pycache__/
+python_example/naivePathQueryCostEstimate.pyo
