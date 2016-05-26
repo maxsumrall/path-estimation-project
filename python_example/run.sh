@@ -6,7 +6,6 @@
 # YOU PROVIDE THIS FILE
 #
 # Created by Max Sumrall - jmsumrall@gmail.com
-
 python3 naivePathQueryCostEstimate.py $1 $2 $3
 
 

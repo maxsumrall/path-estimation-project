@@ -7,4 +7,4 @@
 # Created by Max Sumrall - jmsumrall@gmail.com
 
 #This is silly, and not needed for python, but everyone loves SPEED and POWAH!
-python -O -m py_compile naivePathQueryCostEstimate.py
+python3 -O -m py_compile naivePathQueryCostEstimate.py
