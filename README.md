@@ -9,12 +9,12 @@ Here is an example interaction between this script and your program.
 
 ```
 $ graph.data.txt 4 10000 //The first input.
-$ 98745       //The size of the data structure.
-$ 3 4 9       //Three edge labels of a path to estimate.
-$ 490         //The estimated number of paths with those labels.
-$ 8 1 1       //Three more labels of a path to estimate.
-$ 0           //The program estimated no paths in the graph.
-$             //An empty string, notifying your program to terminate.
+$ 98745            //The size of the data structure.
+$ + 0              //Three edge labels of a path to estimate.
+$ 482              //The estimated number of paths with those labels.
+$ + 5 + 0          //Three more labels of a path to estimate.
+$ 216              //The program estimated no paths in the graph.
+$                  //An empty string, notifying your program to terminate.
 ```
 
 ## Getting Started
