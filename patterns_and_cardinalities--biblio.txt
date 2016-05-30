@@ -1,0 +1,246 @@
+-------------------------------
+-------- Biblio Dataset -------
+-------------------------------
+
+	------------------
+	--- graph size ---
+	------------------
+		╒══════╤══════╕
+		│nodes │rels  │
+		╞══════╪══════╡
+		│837   │1499  │
+		└──────┴──────┘
+		╒════════════╤═════╕
+		│rel type    │count│
+		╞════════════╪═════╡
+		│CITES       │193  │
+		├────────────┼─────┤
+		│PUBLISHED_IN│300  │
+		├────────────┼─────┤
+		│AUTHORS     │482  │
+		├────────────┼─────┤
+		│EXTENDED_TO │100  │
+		├────────────┼─────┤
+		│KNOWS       │367  │
+		├────────────┼─────┤
+		│HELD_IN     │57   │
+		└────────────┴─────┘		
+
+	----------------------------
+	---- relationship types ----
+	----------------------------
+		//    0: authors (i.e., an author “authors” a paper)
+		//    1: publishedIn (i.e., a paper is “publishedIn” a conference)
+		//    2: heldIn (i.e., a conference is “heldIn” a city)
+		//    3: extendedTo (i.e., a paper is “extendedTo” a journal paper)
+		//    4: cites (i.e., a paper “cites” another paper)
+		//    5: knows (i.e., an author “knows” another author)
+		╒═════════════╤════════╕
+		│type         │type id │
+		╞═════════════╪════════╡
+		│AUTHORS      │ 0      │
+		├─────────────┼────────┤
+		│PUBLISHED_IN │ 1      │
+		├─────────────┼────────┤
+		│HELD_IN      │ 2      │
+		├─────────────┼────────┤
+		│EXTENDED_TO  │ 3      │
+		├─────────────┼────────┤
+		│CITES        │ 4      │
+		├─────────────┼────────┤
+		│KNOWS        │ 5      │
+		└─────────────┴────────┘
+
+	----------------------------
+	----- Load into Neo4j ------
+	----------------------------
+
+		LOAD CSV FROM 'file:///biblio.txt' AS line FIELDTERMINATOR ' '
+		WITH line[0] AS startId, line[1] AS relType, line[2] AS endId 
+		MERGE (startNode {id:startId})
+		MERGE (endNode {id:endId})
+		FOREACH(_ IN (CASE relType WHEN "0" THEN [null] ELSE [] END) | CREATE (startNode)-[:AUTHORS]->(endNode))
+		FOREACH(_ IN (CASE relType WHEN "1" THEN [null] ELSE [] END) | CREATE (startNode)-[:PUBLISHED_IN]->(endNode))
+		FOREACH(_ IN (CASE relType WHEN "2" THEN [null] ELSE [] END) | CREATE (startNode)-[:HELD_IN]->(endNode))
+		FOREACH(_ IN (CASE relType WHEN "3" THEN [null] ELSE [] END) | CREATE (startNode)-[:EXTENDED_TO]->(endNode))
+		FOREACH(_ IN (CASE relType WHEN "4" THEN [null] ELSE [] END) | CREATE (startNode)-[:CITES]->(endNode))
+		FOREACH(_ IN (CASE relType WHEN "5" THEN [null] ELSE [] END) | CREATE (startNode)-[:KNOWS]->(endNode))
+
+	--------------
+	--- method ---
+	--------------
+		// usually
+		MATCH (a)<relationship>(b)
+		MATCH (b)<relationship>(c)
+		MATCH (c)<relationship>(d)
+		WITH DISTINCT a, d
+		RETURN count(*)
+
+		// symmetric patterns
+		MATCH (a)<relationship>(b)
+		MATCH (b)<relationship>(c)
+		MATCH (c)<relationship>(d)
+		WHERE id(a)>id(b)
+		WITH DISTINCT a, d
+		RETURN count(*)
+
+	--------------------------------
+	----- Cardinalities -----
+	--------------------------------
+
+format: Neo4j cypher syntax, project syntax, cardinality
+
+		-------------
+		--- k = 1 ---
+		-------------
+			()-[:AUTHORS]->()
+            + 0
+			482
+
+			()-[:CITES]->()
+            + 4
+			192
+
+			()-[:KNOWS]->()
+            + 5
+			366
+
+		-------------
+		--- k = 2 ---
+		-------------
+			()-[:KNOWS]->()-[:AUTHORS]->()
+            + 5 + 0
+			216
+
+			()-[:AUTHORS]->()<-[:CITES]-()
+            + 0 - 4
+			275
+
+			()-[:AUTHORS]->()-[:PUBLISHED_IN]->()
+            + 0 + 1
+			482
+
+			()<-[:PUBLISHED_IN]-()-[:EXTENDED_TO]->()
+            - 1 + 3
+			93
+
+			()-[:PUBLISHED_IN]->()-[:HELD_IN]->()
+            + 1 + 2
+			155
+
+			()-[:EXTENDED_TO]->()-[:PUBLISHED_IN]->()
+            + 3 + 1
+			0
+
+			()<-[:EXTENDED_TO]-()<-[:HELD_IN]-()
+            - 3 - 2
+			0   note: the path + 2 + 3 will have the same cardinality
+
+			()-[:EXTENDED_TO]->()<-[:HELD_IN]-()
+            + 3 - 2
+			0 
+
+			()<-[:EXTENDED_TO]-()<-[:AUTHORS]-()
+            - 3 - 0
+			118   note: the path + 0 + 3 will have the same cardinality
+
+		-------------
+		--- k = 3 ---
+		-------------
+			()<-[:KNOWS]-()-[:KNOWS]->()-[:AUTHORS]->()
+            - 5 + 5 + 0
+			220
+
+			()-[:AUTHORS]->()-[:CITES]->()<-[:CITES]-()
+            + 0 + 4 - 4
+			1456
+
+			()-[:AUTHORS]->()-[:PUBLISHED_IN]->()-[:HELD_IN]->()
+            + 0 + 1 + 2
+			151
+
+			()-[:AUTHORS]->()<-[:CITES]-()-[:PUBLISHED_IN]->()
+            + 0 - 4 + 1
+			260
+
+			()-[:AUTHORS]->()-[:CITES]->()-[:PUBLISHED_IN]->()
+            + 0 + 4 + 1
+			284
+
+			()<-[:KNOWS]-()-[:AUTHORS]->()-[:EXTENDED_TO]->()
+            - 5 + 0 + 3
+			70
+
+			()<-[:EXTENDED_TO]-()-[:CITES]->()<-[:AUTHORS]-()
+            - 3 + 4 - 0
+			64
+
+			()<-[:EXTENDED_TO]-()<-[:CITES]-()<-[:AUTHORS]-()
+            - 3 - 4 - 0
+			85  note: the path + 0 + 4 + 3 will have the same cardinality
+
+			()-[:EXTENDED_TO]->()<-[:CITES]-()<-[:AUTHORS]-()
+            + 3 - 4 - 0
+			0
+
+            ()-[:AUTHORS]->()-[:EXTENDED_TO]->()-[:HELD_IN]->()
+            + 0 + 3 + 2
+            0
+
+            ()-[:KNOWS]->()-[:KNOWS]->()-[:CITES]->()
+            + 5 + 5 + 4
+            0
+
+		-------------
+		--- k = 4 ---
+		-------------
+			()-[:AUTHORS]->()<-[:CITES]-()-[:PUBLISHED_IN]->()-[:HELD_IN]->()
+            + 0 - 4 + 1 + 2
+			87
+
+			()-[:KNOWS]->()-[:AUTHORS]->()-[:PUBLISHED_IN]->()-[:HELD_IN]->()
+            + 5 + 0 + 1 + 2
+			51
+
+			()<-[:KNOWS]-()-[:AUTHORS]->()<-[:CITES]-()-[:EXTENDED_TO]->()
+            - 5 + 0 - 4 + 3
+			32
+
+            ()-[:KNOWS]->()-[:AUTHORS]->()-[:EXTENDED_TO]->()-[:HELD_IN]->()
+            + 5 + 0 + 3 + 2
+            0
+
+            ()-[:KNOWS]->()-[:KNOWS]->()-[:KNOWS]->()-[:CITES]->()
+            + 5 + 5 + 5 + 4
+            0
+
+		-------------
+		--- k = 5 ---
+		-------------
+			()-[:KNOWS]->()-[:AUTHORS]->()<-[:CITES]-()-[:PUBLISHED_IN]->()-[:HELD_IN]->()
+            + 5 + 0 - 4 + 1 + 2
+			38
+
+			()<-[:KNOWS]-()-[:AUTHORS]->()-[:CITES]->()-[:PUBLISHED_IN]->()<-[:PUBLISHED_IN]-()
+            - 5 + 0 + 4 + 1 - 1
+			561
+
+            ()<-[:KNOWS]-()-[:AUTHORS]->()-[:CITES]->()-[:PUBLISHED_IN]->()-[:PUBLISHED_IN]->()
+            - 5 + 0 + 4 + 1 + 1
+            0
+
+			()-[:KNOWS]->()-[:AUTHORS]->()-[:CITES]->()-[:PUBLISHED_IN]->()-[:PUBLISHED_IN]->()
+            + 5 + 0 + 4 + 1 + 1
+			0
+
+            ()-[:KNOWS]->()-[:AUTHORS]->()-[:CITES]->()-[:EXTENDED_TO]->()-[:HELD_IN]->()
+            + 5 + 0 + 4 + 3 + 2
+            0
+
+            ()-[:KNOWS]->()-[:KNOWS]->()-[:KNOWS]->()-[:KNOWS]->()-[:CITES]->()
+            + 5 + 5 + 5 + 5 + 4
+            0
+
+            ()-[:KNOWS]->()-[:KNOWS]->()-[:KNOWS]->()-[:CITES]->()-[:CITES]->()
+            + 5 + 5 + 5 + 4 + 4
+            0
