@@ -12,6 +12,9 @@ def main():
 
     message = sys.stdin.readline()
     while message != "\n":
+        message = message.replace("+", "")
+        message = message.replace("-", "")
+        message.strip()
         edge_labels = message.split()
         estimated_hits = 0
         for edge in edge_labels:
