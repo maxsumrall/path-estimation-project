@@ -1,60 +1,44 @@
-import subprocess
+import csv
+import json
 import os
+import subprocess
+import sys
 
-# choose which example to use
-import time
+# You must pass in the path to the queries csv file as the third argument
+queries_file = os.path.abspath(sys.argv[1])
+# You must pass in the path to the project to grade as the first argument
+test_project_location = sys.argv[2]
+# You must pass in the path to the file of the graph as the second argument
+graph_file = os.path.abspath(sys.argv[3])
+# You must pass in the maximum path length as the fourth argument
+maximum_path_length = sys.argv[4]
+# You must pass in the budget as the fifth argument.
+budget = sys.argv[5]
 
-test_project_location = ["python_example", "java_example", "c_example"][0]
+# test_project_location = 'python_example'
+# graph_file = os.path.abspath('biblio.txt')
+# queries_file = os.path.abspath('biblio.csv')
+# maximum_path_length = '10'
+# budget = '10'
 
+os.chdir(test_project_location)
 
-# A script to execute the setup and run scripts supplied by the students.
-# All input and output to the students programs are expected to be newline terminated.
-def main():
-    file = "biblio.txt"
-    maximum_path_length = "10"
-    budget = "1000000"
+subprocess.Popen("./setup.sh", stdout=subprocess.DEVNULL).wait()
 
-    abs_path = os.path.abspath(file)
+child = subprocess.Popen(["./run.sh", graph_file, maximum_path_length, budget],
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         bufsize=1, universal_newlines=True)
 
-    # Students programs are first setup with this script.
-    # For Python or other interrupted programs, nothing needs to be done inside the script.
-    # For compiled programs, this is where you invoke the compiler.
-    subprocess.call("cd " + test_project_location + " && ./setup.sh && cd ..", shell=True)
+with open(queries_file, "r") as csvfile:
+    reader = csv.reader(csvfile, delimiter=',')
+    result = {"path_results": []}
+    for row in reader:
+        path, actual = row
+        child.stdin.write(path + "\n")
+        estimate = child.stdout.readline().strip()
+        result["path_results"].append({"path": path.strip(), "estimate": estimate.strip(), "actual": actual.strip()})
+    result["score"] = "10"
+    print(json.dumps(result))
 
-    # Students programs are invoked with this script.
-    # This script may be called many times. That is why you should do setup
-    # tasks in the setup script and not in this script.
-    cmd = "cd " + test_project_location + " && ./run.sh " + abs_path + " " + maximum_path_length + " " + budget
-    print(cmd)
-    child = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-
-    # The process must first send the size of the data structure
-    size = getResponse(child)
-
-    queries = open("biblio.csv", "r")
-    line = queries.readline()
-    while line != "":
-        line = line.split(",")
-        path = line[0]
-        actual = line[1]
-        send(path, child)
-        # The process must respond with it's estimate
-        estimate = getResponse(child)
-        print("Path: " + path + " Estimate: " + estimate + " Actual: " + actual)
-        line = queries.readline()
-
-    # A signal to the process that there are no more estimates.
-    send("", child)
-
-
-def send(message, child):
-    child.stdin.write((message + "\n").encode())
-    child.stdin.flush()
-
-
-def getResponse(child):
-    response = child.stdout.readline().decode().strip()
-    return response
-
-
-main()
+child.stdin.write(("\n"))
