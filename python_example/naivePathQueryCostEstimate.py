@@ -19,7 +19,7 @@ def main():
         estimated_hits = 0
         for edge in edge_labels:
             estimated_hits += len(edges[edge])
-        sys.stdout.write(str(estimated_hits) + "\n")
+        print(str(estimated_hits) + "\n")
         message = sys.stdin.readline()
 
     sys.stdout.write("")
