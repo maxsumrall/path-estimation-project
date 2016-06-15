@@ -8,7 +8,7 @@ Here is an example interaction between this script and your program.
 
 
 ```
-$ graph.data.txt 4 10000 //The first input.
+$ graph.data.txt 3 10000 //The first input.
 $ 98745            //The size of the data structure.
 $ + 0              //Three edge labels of a path to estimate.
 $ 482              //The estimated number of paths with those labels.
@@ -21,20 +21,12 @@ $                  //An empty string, notifying your program to terminate.
 
 To help you get started with input and output to this script, an example project in Python, Java, and C++ have been provided.
 
-To test your program locally, or to test the different example projects, you can edit the file `grader.py` to point to the folder of the project you want to test. If you want to test the Python project, set the variable `test_project_location` to 
+
+## Run
+
+To run the script, execute it with the correct arguments. For a maximum path length of 3 and a budget of 10,000 bytes, 
+you would say:
 
 ```
-test_project_location = ["python_example", "java_example", "c_example”][0]
-```
-
-To test the Java project, set this line to
-
-```
-test_project_location = ["python_example", "java_example", "c_example”][1]
-```
-
-To test the C++ project, set this line to 
-
-```
-test_project_location = ["python_example", "java_example", "c_example"][2]
+python3 grader.py biblio.csv java_example biblio.txt 3 10000
 ```
